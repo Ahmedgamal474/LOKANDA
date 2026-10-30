@@ -1,0 +1,5 @@
+package com.lokanda.hotel.payment;
+
+public enum PaymentMethod {
+    CASH, CREDIT_CARD, DEBIT_CARD
+}
