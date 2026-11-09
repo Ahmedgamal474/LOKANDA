@@ -1,13 +1,16 @@
+
 package com.lokanda.hotel.bookingpackage;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import com.lokanda.hotel.room.RoomType;
+
 public abstract class BookingPackage {
+
     protected String name;
 
     public BookingPackage(String name) {
-        this.name = name;
+        setName(name);
     }
 
     public String getName() {
@@ -15,10 +18,24 @@ public abstract class BookingPackage {
     }
 
     public void setName(String name) {
-        this.name = name;
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Package name cannot be empty");
+        }
+
+        String trimmed = name.trim();
+
+        if (trimmed.length() > 100) {
+            throw new IllegalArgumentException(
+                    "Package name cannot exceed 100 characters");
+        }
+
+        this.name = trimmed;
     }
 
-    public abstract BigDecimal calculatePackagePrice(RoomType roomType, LocalDate checkIn, LocalDate checkOut);
+    public abstract BigDecimal calculatePackagePrice(
+            RoomType roomType, LocalDate checkIn, LocalDate checkOut);
 
     public abstract String getDescription();
 }
+
