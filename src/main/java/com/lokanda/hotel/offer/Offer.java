@@ -1,3 +1,4 @@
+
 package com.lokanda.hotel.offer;
 
 import java.time.LocalDate;
@@ -17,13 +18,13 @@ public class Offer {
                  double discountPercentage, LocalDate startDate,
                  LocalDate endDate, boolean active) {
 
-        this.offerId = offerId;
-        this.name = name;
-        this.description = description;
-        this.discountPercentage = discountPercentage;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.active = active;
+        setOfferId(offerId);
+        setName(name);
+        setDescription(description);
+        setDiscountPercentage(discountPercentage);
+        setStartDate(startDate);
+        setEndDate(endDate);
+        setActive(active);
     }
 
     public int getOfferId() {
@@ -31,6 +32,10 @@ public class Offer {
     }
 
     public void setOfferId(int offerId) {
+        if (offerId < 0) {
+            throw new IllegalArgumentException("Offer ID cannot be negative");
+        }
+
         this.offerId = offerId;
     }
 
@@ -39,7 +44,18 @@ public class Offer {
     }
 
     public void setName(String name) {
-        this.name = name;
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Offer name cannot be empty");
+        }
+
+        String trimmed = name.trim();
+
+        if (trimmed.length() > 100) {
+            throw new IllegalArgumentException(
+                    "Offer name cannot exceed 100 characters");
+        }
+
+        this.name = trimmed;
     }
 
     public String getDescription() {
@@ -47,7 +63,12 @@ public class Offer {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        if (description == null || description.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Offer description cannot be empty");
+        }
+
+        this.description = description.trim();
     }
 
     public double getDiscountPercentage() {
@@ -55,6 +76,11 @@ public class Offer {
     }
 
     public void setDiscountPercentage(double discountPercentage) {
+        if (discountPercentage < 0 || discountPercentage > 100) {
+            throw new IllegalArgumentException(
+                    "Discount must be between 0 and 100");
+        }
+
         this.discountPercentage = discountPercentage;
     }
 
@@ -63,6 +89,11 @@ public class Offer {
     }
 
     public void setStartDate(LocalDate startDate) {
+        if (startDate == null) {
+            throw new IllegalArgumentException(
+                    "Start date cannot be null");
+        }
+
         this.startDate = startDate;
     }
 
@@ -71,6 +102,16 @@ public class Offer {
     }
 
     public void setEndDate(LocalDate endDate) {
+        if (endDate == null) {
+            throw new IllegalArgumentException(
+                    "End date cannot be null");
+        }
+
+        if (startDate != null && endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException(
+                    "End date cannot be before start date");
+        }
+
         this.endDate = endDate;
     }
 
@@ -89,6 +130,11 @@ public class Offer {
     }
 
     public BigDecimal calculateDiscount(BigDecimal totalPrice) {
+        if (totalPrice == null || totalPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(
+                    "Total price cannot be null or negative");
+        }
+
         double price = totalPrice.doubleValue();
         double discount = price * discountPercentage / 100;
 
