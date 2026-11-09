@@ -7,11 +7,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
-
 import com.lokanda.hotel.model.person.Guest;
 import com.lokanda.hotel.model.person.Receptionist;
 import com.lokanda.hotel.model.offer.Offer;
-
+import com.lokanda.hotel.model.feedback.Feedback;
+import com.lokanda.hotel.model.payment.Payment;
+import com.lokanda.hotel.model.payment.PaymentStatus;
 public class Booking {
 
     private int bookingId;
@@ -24,10 +25,12 @@ public class Booking {
     private BookingStatus status;
     private LocalDateTime createdAt;
     private List<BookingItem> items;
-
+    private List<Payment> payments;
+    private Feedback feedback;
     // Default Constructor
     public Booking() {
         this.items = new ArrayList<>();
+        this.payments = new ArrayList<>();
         this.discountAmount = BigDecimal.ZERO;
         this.status = BookingStatus.PENDING;
         this.createdAt = LocalDateTime.now();
@@ -150,6 +153,29 @@ public class Booking {
         return Collections.unmodifiableList(items);
     }
 
+    public List<Payment> getPayments() {
+        return Collections.unmodifiableList(payments);
+    }
+
+    public Feedback getFeedback() {
+        return feedback;
+    }
+
+    public void setFeedback(Feedback feedback) {
+        if (feedback == null) {
+            throw new IllegalArgumentException("Feedback cannot be null");
+        }
+
+        if (status != BookingStatus.COMPLETED) {
+            throw new IllegalStateException("Feedback is allowed only for completed bookings");
+        }
+
+        if (this.feedback != null) {
+            throw new IllegalStateException("This booking already has feedback");
+        }
+
+        this.feedback = feedback;
+    }
     // Add a Booking Item
     public void addItem(BookingItem item) {
         if (item == null) {
@@ -169,7 +195,18 @@ public class Booking {
 
         items.add(item);
     }
+    //Add payment
+    public void addPayment(Payment payment) {
+        if (payment == null) {
+            throw new IllegalArgumentException("Payment cannot be null");
+        }
 
+        if (status == BookingStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot add payment to a cancelled booking");
+        }
+
+        payments.add(payment);
+    }
     // Calculate Total Price Before Discount
     public BigDecimal calculateTotal() {
         BigDecimal total = BigDecimal.ZERO;
@@ -191,7 +228,26 @@ public class Booking {
 
         return total.subtract(discountAmount);
     }
+    //Calculate Total Paid
+    public BigDecimal getTotalPaid() {
+        BigDecimal total = BigDecimal.ZERO;
 
+        for (Payment payment : payments) {
+            if (payment.getStatus() == PaymentStatus.COMPLETED) {
+                total = total.add(payment.getAmount());
+            }
+        }
+
+        return total;
+    }
+    //Is it Fully Paid
+    public boolean isFullyPaid() {
+        return getTotalPaid().compareTo(calculateFinalPrice()) >= 0;
+    }
+    //Get the remaining Balance
+    public BigDecimal getRemainingBalance() {
+        return calculateFinalPrice().subtract(getTotalPaid());
+    }
     // Modify Booking Dates
     public void modify(LocalDate checkIn, LocalDate checkOut) {
         if (status == BookingStatus.CANCELLED ||
@@ -204,7 +260,21 @@ public class Booking {
         this.checkIn = checkIn;
         this.checkOut = checkOut;
     }
-
+//    public void confirm() {
+//        if (status != BookingStatus.PENDING) {
+//            throw new IllegalStateException("Only pending bookings can be confirmed");
+//        }
+//
+//        this.status = BookingStatus.CONFIRMED;
+//    }
+//
+//    public void complete() {
+//        if (status != BookingStatus.CONFIRMED) {
+//            throw new IllegalStateException("Only confirmed bookings can be completed");
+//        }
+//
+//        this.status = BookingStatus.COMPLETED;
+//    }
     // Cancel Booking
     public void cancel() {
         if (status == BookingStatus.CANCELLED ||
