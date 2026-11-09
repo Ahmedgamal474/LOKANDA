@@ -1,150 +1,66 @@
 
 package com.lokanda.hotel.person;
 
-public abstract class Person {
+public class Guest extends Person {
 
-    protected int personId;
-    protected String firstName;
-    protected String lastName;
-    protected String email;
-    protected String phone;
+    private String nationalId;
 
-    protected Person() {
+    public Guest() {
     }
 
-    protected Person(int personId, String firstName, String lastName, String email, String phone) {
-        setPersonId(personId);
-        setFirstName(firstName);
-        setLastName(lastName);
-        setEmail(email);
-        setPhone(phone);
+    public Guest(int personId, String firstName, String lastName,
+                 String email, String phone, String nationalId) {
+        super(personId, firstName, lastName, email, phone);
+        setNationalId(nationalId);
     }
 
-    public int getPersonId() {
-        return personId;
+    public Guest(String firstName, String lastName, String email,
+                 String phone, String nationalId) {
+        this(0, firstName, lastName, email, phone, nationalId);
     }
 
-    public final void setPersonId(int personId) {
-        if (personId < 0) {
-            throw new IllegalArgumentException("Person ID cannot be negative");
-        }
-        this.personId = personId;
+    public String getNationalId() {
+        return nationalId;
     }
 
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public final void setFirstName(String firstName) {
-        this.firstName = validateName(firstName, "First name");
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public final void setLastName(String lastName) {
-        this.lastName = validateName(lastName, "Last name");
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public final void setEmail(String email) {
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email cannot be empty");
+    public void setNationalId(String nationalId) {
+        if (nationalId == null || nationalId.isBlank()) {
+            throw new IllegalArgumentException("National ID cannot be empty");
         }
 
-        String trimmed = email.trim();
+        String trimmed = nationalId.trim();
 
-        if (trimmed.length() > 100 || !isValidEmail(trimmed)) {
+        if (trimmed.length() != 14) {
             throw new IllegalArgumentException(
-                    "Email is not valid (example: name@mail.com)");
+                    "National ID must be 14 digits");
         }
 
-        this.email = trimmed;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public final void setPhone(String phone) {
-        if (phone == null || phone.isBlank()) {
-            throw new IllegalArgumentException("Phone cannot be empty");
-        }
-
-        String trimmed = phone.trim();
-
-        if (!isValidPhone(trimmed)) {
+        if (trimmed.charAt(0) != '2' && trimmed.charAt(0) != '3') {
             throw new IllegalArgumentException(
-                    "Phone must be 11 digits and start with 010, 011, 012 or 015");
+                    "National ID must start with 2 or 3");
         }
 
-        this.phone = trimmed;
-    }
-
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
-
-    private static String validateName(String name, String label) {
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException(label + " cannot be empty");
-        }
-
-        String trimmed = name.trim();
-
-        if (trimmed.length() < 2 || trimmed.length() > 30) {
-            throw new IllegalArgumentException(
-                    label + " must be 2-30 characters");
-        }
-
-        return trimmed;
-    }
-
-    private static boolean isValidPhone(String phone) {
-
-        if (phone.length() != 11) {
-            return false;
-        }
-
-        if (!phone.startsWith("010")
-                && !phone.startsWith("011")
-                && !phone.startsWith("012")
-                && !phone.startsWith("015")) {
-            return false;
-        }
-
-        for (int i = 0; i < phone.length(); i++) {
-            if (!Character.isDigit(phone.charAt(i))) {
-                return false;
+        for (int i = 0; i < trimmed.length(); i++) {
+            if (!Character.isDigit(trimmed.charAt(i))) {
+                throw new IllegalArgumentException(
+                        "National ID must contain only digits");
             }
         }
 
-        return true;
-    }
+        int month = Integer.parseInt(trimmed.substring(3, 5));
+        int day = Integer.parseInt(trimmed.substring(5, 7));
 
-    private static boolean isValidEmail(String email) {
-
-        int atIndex = email.indexOf('@');
-        int dotIndex = email.lastIndexOf('.');
-
-        if (atIndex <= 0 || dotIndex <= atIndex + 1) {
-            return false;
+        if (month < 1 || month > 12) {
+            throw new IllegalArgumentException(
+                    "National ID month must be between 1 and 12");
         }
 
-        if (dotIndex == email.length() - 1) {
-            return false;
+        if (day < 1 || day > 31) {
+            throw new IllegalArgumentException(
+                    "National ID day must be between 1 and 31");
         }
 
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return getFullName() + " <" + email + ">";
+        this.nationalId = trimmed;
     }
 }
 
