@@ -1,4 +1,4 @@
-package com.lokanda.hotel.payment;
+package com.lokanda.hotel.model.payment;
 
 public enum PaymentStatus {
     PENDING,

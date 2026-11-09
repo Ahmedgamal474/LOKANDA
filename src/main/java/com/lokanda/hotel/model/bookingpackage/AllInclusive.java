@@ -1,16 +1,16 @@
 
-package com.lokanda.hotel.bookingpackage;
+package com.lokanda.hotel.model.bookingpackage;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-import com.lokanda.hotel.room.RoomType;
+import com.lokanda.hotel.model.room.RoomType;
 
-public class HalfBoard extends BookingPackage {
+public class AllInclusive extends BookingPackage {
 
-    public HalfBoard() {
-        super("Half Board");
+    public AllInclusive() {
+        super("All Inclusive");
     }
 
     @Override
@@ -37,15 +37,15 @@ public class HalfBoard extends BookingPackage {
 
         switch (roomType) {
             case SINGLE:
-                pricePerNight = new BigDecimal("25");
+                pricePerNight = new BigDecimal("50");
                 break;
 
             case DOUBLE:
-                pricePerNight = new BigDecimal("40");
+                pricePerNight = new BigDecimal("80");
                 break;
 
             default:
-                pricePerNight = new BigDecimal("60");
+                pricePerNight = new BigDecimal("120");
         }
 
         return pricePerNight.multiply(BigDecimal.valueOf(nights));
@@ -53,6 +53,7 @@ public class HalfBoard extends BookingPackage {
 
     @Override
     public String getDescription() {
-        return "Includes breakfast and one additional main meal per day.";
+        return "Includes meals, drinks, and other services covered by the hotel's all-inclusive plan.";
     }
 }
+

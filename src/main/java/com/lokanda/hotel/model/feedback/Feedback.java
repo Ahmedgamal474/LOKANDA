@@ -1,5 +1,5 @@
 
-package com.lokanda.hotel.feedback;
+package com.lokanda.hotel.model.feedback;
 
 import java.time.LocalDateTime;
 

@@ -1,5 +1,5 @@
 
-package com.lokanda.hotel.person;
+package com.lokanda.hotel.model.person;
 
 public abstract class Person {
 
@@ -128,14 +128,23 @@ public abstract class Person {
 
     private static boolean isValidEmail(String email) {
 
-        int atIndex = email.indexOf('@');
-        int dotIndex = email.lastIndexOf('.');
-
-        if (atIndex <= 0 || dotIndex <= atIndex + 1) {
+        if (email.contains(" ")) {
             return false;
         }
 
-        if (dotIndex == email.length() - 1) {
+        int atIndex = email.indexOf('@');
+
+        if (atIndex <= 0 || atIndex != email.lastIndexOf('@')) {
+            return false;
+        }
+
+        int dotIndex = email.lastIndexOf('.');
+
+        if (dotIndex <= atIndex + 1 || dotIndex == email.length() - 1) {
+            return false;
+        }
+
+        if (email.charAt(atIndex + 1) == '.' || email.charAt(dotIndex - 1) == '.') {
             return false;
         }
 

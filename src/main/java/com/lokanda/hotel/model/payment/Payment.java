@@ -1,5 +1,5 @@
 
-package com.lokanda.hotel.payment;
+package com.lokanda.hotel.model.payment;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

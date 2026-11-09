@@ -1,5 +1,5 @@
 
-package com.lokanda.hotel.person;
+package com.lokanda.hotel.model.person;
 
 public class Guest extends Person {
 

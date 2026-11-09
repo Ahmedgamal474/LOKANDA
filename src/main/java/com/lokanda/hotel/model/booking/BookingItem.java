@@ -1,9 +1,9 @@
 
-package com.lokanda.hotel.booking;
+package com.lokanda.hotel.model.booking;
 
 import java.math.BigDecimal;
-import com.lokanda.hotel.room.Room;
-import com.lokanda.hotel.bookingpackage.BookingPackage;
+import com.lokanda.hotel.model.room.Room;
+import com.lokanda.hotel.model.bookingpackage.BookingPackage;
 
 public class BookingItem {
 

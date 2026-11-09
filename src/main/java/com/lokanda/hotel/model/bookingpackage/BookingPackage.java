@@ -1,9 +1,9 @@
 
-package com.lokanda.hotel.bookingpackage;
+package com.lokanda.hotel.model.bookingpackage;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import com.lokanda.hotel.room.RoomType;
+import com.lokanda.hotel.model.room.RoomType;
 
 public abstract class BookingPackage {
 

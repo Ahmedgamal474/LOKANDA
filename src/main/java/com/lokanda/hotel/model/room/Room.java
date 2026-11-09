@@ -1,5 +1,5 @@
 
-package com.lokanda.hotel.room;
+package com.lokanda.hotel.model.room;
 
 public class Room {
 

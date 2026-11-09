@@ -1,5 +1,5 @@
 
-package com.lokanda.hotel.booking;
+package com.lokanda.hotel.model.booking;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import com.lokanda.hotel.person.Guest;
-import com.lokanda.hotel.person.Receptionist;
-import com.lokanda.hotel.offer.Offer;
+import com.lokanda.hotel.model.person.Guest;
+import com.lokanda.hotel.model.person.Receptionist;
+import com.lokanda.hotel.model.offer.Offer;
 
 public class Booking {
 
@@ -132,12 +132,18 @@ public class Booking {
             throw new IllegalStateException("Cannot modify this booking");
         }
 
-        this.items = new ArrayList<>(items);
+        List<BookingItem> newItems = new ArrayList<>(items);
+        BigDecimal newTotal = BigDecimal.ZERO;
 
-        if (discountAmount.compareTo(calculateTotal()) > 0) {
-            this.items.clear();
+        for (BookingItem item : newItems) {
+            newTotal = newTotal.add(item.getPriceSnapshot());
+        }
+
+        if (discountAmount.compareTo(newTotal) > 0) {
             throw new IllegalArgumentException("Discount cannot exceed total price");
         }
+
+        this.items = newItems;
     }
 
     public List<BookingItem> getItems() {
@@ -155,12 +161,13 @@ public class Booking {
             throw new IllegalStateException("Cannot modify this booking");
         }
 
-        items.add(item);
+        BigDecimal newTotal = calculateTotal().add(item.getPriceSnapshot());
 
-        if (discountAmount.compareTo(calculateTotal()) > 0) {
-            items.remove(items.size() - 1);
+        if (discountAmount.compareTo(newTotal) > 0) {
             throw new IllegalArgumentException("Discount cannot exceed total price");
         }
+
+        items.add(item);
     }
 
     // Calculate Total Price Before Discount

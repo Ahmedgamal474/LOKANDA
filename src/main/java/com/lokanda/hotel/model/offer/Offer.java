@@ -1,5 +1,5 @@
 
-package com.lokanda.hotel.offer;
+package com.lokanda.hotel.model.offer;
 
 import java.time.LocalDate;
 import java.math.BigDecimal;
@@ -76,7 +76,8 @@ public class Offer {
     }
 
     public void setDiscountPercentage(double discountPercentage) {
-        if (discountPercentage < 0 || discountPercentage > 100) {
+        if (!Double.isFinite(discountPercentage)
+                || discountPercentage < 0 || discountPercentage > 100) {
             throw new IllegalArgumentException(
                     "Discount must be between 0 and 100");
         }
@@ -92,6 +93,11 @@ public class Offer {
         if (startDate == null) {
             throw new IllegalArgumentException(
                     "Start date cannot be null");
+        }
+
+        if (endDate != null && endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException(
+                    "Start date cannot be after end date");
         }
 
         this.startDate = startDate;
@@ -135,9 +141,7 @@ public class Offer {
                     "Total price cannot be null or negative");
         }
 
-        double price = totalPrice.doubleValue();
-        double discount = price * discountPercentage / 100;
-
-        return BigDecimal.valueOf(discount);
+        return totalPrice.multiply(BigDecimal.valueOf(discountPercentage))
+                .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
     }
 }
