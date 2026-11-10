@@ -1,0 +1,236 @@
+DROP DATABASE IF EXISTS hotel_reservation;
+
+CREATE DATABASE hotel_reservation
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE hotel_reservation;
+
+
+-- =========================================
+-- PERSON
+-- =========================================
+
+CREATE TABLE person (
+    person_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(30) NOT NULL,
+    last_name VARCHAR(30) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(11)
+);
+
+
+-- =========================================
+-- GUEST
+-- =========================================
+
+CREATE TABLE guest (
+    person_id INT PRIMARY KEY,
+    national_id VARCHAR(14) NOT NULL UNIQUE,
+
+    CONSTRAINT fk_guest_person
+        FOREIGN KEY (person_id)
+        REFERENCES person(person_id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================
+-- RECEPTIONIST
+-- =========================================
+
+CREATE TABLE receptionist (
+    person_id INT PRIMARY KEY,
+    employee_id VARCHAR(20) NOT NULL UNIQUE,
+
+    CONSTRAINT fk_receptionist_person
+        FOREIGN KEY (person_id)
+        REFERENCES person(person_id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================
+-- ROOM
+-- =========================================
+
+CREATE TABLE room (
+    room_id INT AUTO_INCREMENT PRIMARY KEY,
+    room_number VARCHAR(10) NOT NULL UNIQUE,
+
+    room_type ENUM('SINGLE', 'DOUBLE', 'SUITE') NOT NULL
+);
+
+
+-- =========================================
+-- OFFER
+-- =========================================
+
+CREATE TABLE offer (
+    offer_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    discount_percentage DECIMAL(5,2) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    CONSTRAINT chk_offer_discount
+        CHECK (discount_percentage BETWEEN 0 AND 100),
+
+    CONSTRAINT chk_offer_dates
+        CHECK (start_date <= end_date)
+);
+
+
+-- =========================================
+-- BOOKING PACKAGE
+-- =========================================
+
+CREATE TABLE booking_package (
+    package_id INT AUTO_INCREMENT PRIMARY KEY,
+    package_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+INSERT INTO booking_package (package_name)
+VALUES
+    ('Breakfast Only'),
+    ('Half Board'),
+    ('All Inclusive');
+
+
+-- =========================================
+-- BOOKING
+-- =========================================
+
+CREATE TABLE booking (
+    booking_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    guest_id INT NOT NULL,
+    receptionist_id INT NOT NULL,
+    offer_id INT DEFAULT NULL,
+
+    check_in DATE NOT NULL,
+    check_out DATE NOT NULL,
+
+    discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+
+    status ENUM(
+        'PENDING',
+        'CONFIRMED',
+        'CANCELLED',
+        'COMPLETED'
+    ) NOT NULL DEFAULT 'PENDING',
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_booking_guest
+        FOREIGN KEY (guest_id)
+        REFERENCES guest(person_id),
+
+    CONSTRAINT fk_booking_receptionist
+        FOREIGN KEY (receptionist_id)
+        REFERENCES receptionist(person_id),
+
+    CONSTRAINT fk_booking_offer
+        FOREIGN KEY (offer_id)
+        REFERENCES offer(offer_id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT chk_booking_dates
+        CHECK (check_in < check_out),
+
+    CONSTRAINT chk_booking_discount
+        CHECK (discount_amount >= 0)
+);
+
+
+-- =========================================
+-- BOOKING ITEM
+-- =========================================
+
+CREATE TABLE booking_item (
+    item_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    booking_id INT NOT NULL,
+    room_id INT NOT NULL,
+    package_id INT NOT NULL,
+
+    price_snapshot DECIMAL(12,2) NOT NULL,
+
+    CONSTRAINT fk_item_booking
+        FOREIGN KEY (booking_id)
+        REFERENCES booking(booking_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_item_room
+        FOREIGN KEY (room_id)
+        REFERENCES room(room_id),
+
+    CONSTRAINT fk_item_package
+        FOREIGN KEY (package_id)
+        REFERENCES booking_package(package_id),
+
+    CONSTRAINT uq_booking_room
+        UNIQUE (booking_id, room_id),
+
+    CONSTRAINT chk_item_price
+        CHECK (price_snapshot >= 0)
+);
+
+
+-- =========================================
+-- PAYMENT
+-- =========================================
+
+CREATE TABLE payment (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    booking_id INT NOT NULL,
+
+    amount DECIMAL(12,2) NOT NULL,
+    payment_date DATETIME NOT NULL,
+
+    method ENUM(
+        'CASH',
+        'CREDIT_CARD',
+        'DEBIT_CARD'
+    ) NOT NULL,
+
+    status ENUM(
+        'PENDING',
+        'COMPLETED',
+        'FAILED'
+    ) NOT NULL,
+
+    CONSTRAINT fk_payment_booking
+        FOREIGN KEY (booking_id)
+        REFERENCES booking(booking_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_payment_amount
+        CHECK (amount > 0)
+);
+
+
+-- =========================================
+-- FEEDBACK
+-- =========================================
+
+CREATE TABLE feedback (
+    feedback_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    booking_id INT NOT NULL UNIQUE,
+
+    rating INT NOT NULL,
+    comment TEXT NOT NULL,
+    created_at DATETIME NOT NULL,
+
+    CONSTRAINT fk_feedback_booking
+        FOREIGN KEY (booking_id)
+        REFERENCES booking(booking_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_feedback_rating
+        CHECK (rating BETWEEN 1 AND 5)
+);
