@@ -1,4 +1,4 @@
-package DAO;
+package com.lokanda.hotel.DAO;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
