@@ -1,6 +1,5 @@
-package DAO;
-
-import model.Offer;
+package com.lokanda.hotel.DAO;
+import com.lokanda.hotel.model.offer.Offer;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
