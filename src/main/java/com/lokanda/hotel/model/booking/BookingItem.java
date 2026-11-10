@@ -20,6 +20,24 @@ public class BookingItem {
         setBookingPackage(bookingPackage);
         setPriceSnapshot(this.bookingPackage.calculatePackagePrice(this.room.getType(),checkIn,checkOut));
     }
+    // Constructor for loading BookingItem from database
+    public BookingItem(
+        int itemId,
+        Room room,
+        BookingPackage bookingPackage,
+        BigDecimal priceSnapshot
+) {
+    setItemId(itemId);
+    setRoom(room);
+    setBookingPackage(bookingPackage);
+
+    if (priceSnapshot == null ||
+            priceSnapshot.compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException("Invalid price snapshot");
+    }
+
+    this.priceSnapshot = priceSnapshot;
+}
 
     public int getItemId() {
         return itemId;
