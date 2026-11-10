@@ -287,8 +287,8 @@ public class BookingDAO {
 
                     Booking booking = mapBooking(result);
 
-                    booking.getItems().addAll(getBookingItems(bookingId));
-
+//                    booking.getItems().addAll(getBookingItems(bookingId));
+                    booking.setItems(getBookingItems(bookingId));
                     return booking;
                 }
             }
@@ -314,7 +314,7 @@ public class BookingDAO {
 
                 Booking booking = mapBooking(result);
 
-                booking.getItems().addAll(
+                booking.setItems(
                         getBookingItems(booking.getBookingId())
                 );
 
