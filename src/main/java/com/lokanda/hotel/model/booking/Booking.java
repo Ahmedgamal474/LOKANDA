@@ -50,6 +50,35 @@ public class Booking {
         this.checkOut = checkOut;
         this.receptionist = receptionist;
     }
+    // Constructor for loading booking from database
+    public Booking(
+        int bookingId,
+        Guest guest,
+        LocalDate checkIn,
+        LocalDate checkOut,
+        Receptionist receptionist,
+        Offer offer,
+        BigDecimal discountAmount,
+        BookingStatus status,
+        LocalDateTime createdAt
+) {
+    this(guest, checkIn, checkOut, receptionist);
+
+    setBookingId(bookingId);
+    setOffer(offer);
+    setCreatedAt(createdAt);
+
+    if (discountAmount == null || discountAmount.compareTo(BigDecimal.ZERO) < 0) {
+        throw new IllegalArgumentException("Invalid discount amount");
+    }
+
+    if (status == null) {
+        throw new IllegalArgumentException("Status cannot be null");
+    }
+
+    this.discountAmount = discountAmount;
+    this.status = status;
+}
 
     //Setters & Getters
     public void setBookingId(int bookingId) {
