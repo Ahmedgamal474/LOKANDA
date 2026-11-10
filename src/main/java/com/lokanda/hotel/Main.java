@@ -1,173 +1,99 @@
 package com.lokanda.hotel;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import com.lokanda.hotel.auth.LoginService;
 
-import com.lokanda.hotel.model.booking.Booking;
-import com.lokanda.hotel.model.booking.BookingItem;
-import com.lokanda.hotel.model.bookingpackage.BreakfastOnly;
-import com.lokanda.hotel.model.offer.Offer;
-import com.lokanda.hotel.model.payment.Payment;
-import com.lokanda.hotel.model.payment.PaymentMethod;
-import com.lokanda.hotel.model.feedback.Feedback;
-import com.lokanda.hotel.model.bookingpackage.HalfBoard;
-import com.lokanda.hotel.model.bookingpackage.AllInclusive;
-import com.lokanda.hotel.model.person.Guest;
-import com.lokanda.hotel.model.person.Receptionist;
-import com.lokanda.hotel.model.room.Room;
-import com.lokanda.hotel.model.room.RoomType;
-import com.lokanda.hotel.service.ReservationService;
+import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        System.out.println("======================================");
-        System.out.println("       LOKANDA HOTEL SYSTEM");
-        System.out.println("======================================");
+        Scanner scanner = new Scanner(System.in);
 
-        try {
-            // Create the hotel's rooms.
-            Room room1 = new Room(1, "101", RoomType.SINGLE);
-            Room room2 = new Room(2, "102", RoomType.DOUBLE);
-            Room room3 = new Room(3, "201", RoomType.SUITE);
+        boolean loggedIn = LoginService.login(scanner);
 
-            List<Room> hotelRooms = new ArrayList<>();
-            hotelRooms.add(room1);
-            hotelRooms.add(room2);
-            hotelRooms.add(room3);
-
-            // Create the reservation service.
-            ReservationService reservationService =
-                    new ReservationService(hotelRooms);
-
-            LocalDate checkIn = LocalDate.now().plusDays(10);
-            LocalDate checkOut = checkIn.plusDays(3);
-
-            System.out.println("\n1. Checking available single rooms...");
-            List<Room> availableRooms = reservationService.getAvailableRooms(
-                    checkIn, checkOut, RoomType.SINGLE);
-
-            for (Room room : availableRooms) {
-                System.out.println("Available room: " + room.getRoomNumber());
-            }
-
-            // Create the guest and receptionist.
-            Guest guest = new Guest(
-                    1,
-                    "Hamza",
-                    "Mahdi",
-                    "hamza@example.com",
-                    "01012345678",
-                    "30001011234567"
-            );
-
-            Receptionist receptionist = new Receptionist(
-                    1,
-                    "Ahmed",
-                    "Ali",
-                    "ahmed@example.com",
-                    "01112345678",
-                    "EMP-001"
-            );
-
-            // Create the booking package and calculate its price.
-            BreakfastOnly breakfastPackage = new BreakfastOnly();
-
-            BigDecimal packagePrice = breakfastPackage.calculatePackagePrice(
-                    room1.getType(), checkIn, checkOut);
-
-            BookingItem item = new BookingItem(
-                    1, room1, breakfastPackage, packagePrice);
-
-            // Create the booking.
-            Booking booking = new Booking(
-                    guest, checkIn, checkOut, receptionist);
-
-            booking.setBookingId(1001);
-            booking.addItem(item);
-
-            // Create and apply an offer.
-            Offer offer = new Offer(
-                    1,
-                    "Welcome Offer",
-                    "10 percent discount for a new reservation",
-                    10,
-                    checkIn.minusDays(1),
-                    checkOut.plusDays(1),
-                    true
-            );
-
-            booking.setOffer(offer);
-
-            System.out.println("\n2. Creating reservation...");
-            reservationService.createReservation(booking);
-
-            System.out.println("Reservation created successfully.");
-            System.out.println("Booking ID: " + booking.getBookingId());
-            System.out.println("Guest: " + guest.getFullName());
-            System.out.println("Room: " + room1.getRoomNumber());
-            System.out.println("Package: " + breakfastPackage.getName());
-            System.out.println("Total before discount: "
-                    + booking.calculateTotal());
-            System.out.println("Discount: " + booking.getDiscountAmount());
-            System.out.println("Final price: "
-                    + booking.calculateFinalPrice());
-            System.out.println("Status: " + booking.getStatus());
-
-            System.out.println("\n3. Checking room availability after booking...");
-            availableRooms = reservationService.getAvailableRooms(
-                    checkIn, checkOut, RoomType.SINGLE);
-
-            System.out.println("Available single rooms: "
-                    + availableRooms.size());
-
-            System.out.println("\n4. Finding reservation...");
-            Booking foundBooking =
-                    reservationService.findReservation(1001);
-
-            System.out.println("Found booking: "
-                    + foundBooking.getBookingId());
-
-            System.out.println("\n5. Modifying reservation dates...");
-            reservationService.modifyReservation(
-                    1001, checkIn.plusDays(1), checkOut.plusDays(1));
-
-            System.out.println("Reservation dates modified successfully.");
-
-            System.out.println("\n6. Cancelling reservation...");
-            reservationService.cancelReservation(1001);
-
-            System.out.println("Reservation cancelled successfully.");
-            System.out.println("Final status: " + booking.getStatus());
-
-            System.out.println("\n7. Testing the other hotel packages...");
-            System.out.println("Half Board price: "
-                    + new HalfBoard().calculatePackagePrice(
-                            RoomType.DOUBLE, checkIn, checkOut));
-            System.out.println("All Inclusive price: "
-                    + new AllInclusive().calculatePackagePrice(
-                            RoomType.SUITE, checkIn, checkOut));
-
-            System.out.println("\n8. Testing payment...");
-            Payment payment = new Payment(
-                    booking.calculateFinalPrice(), PaymentMethod.CASH);
-            System.out.println("Payment processed: "
-                    + payment.processPayment());
-            System.out.println("Payment status: " + payment.getStatus());
-
-            System.out.println("\n9. Testing feedback...");
-            Feedback feedback = new Feedback(5, "Excellent stay");
-            System.out.println("Feedback: " + feedback);
-
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            System.out.println("\nOperation failed: " + e.getMessage());
+        if (!loggedIn) {
+            scanner.close();
+            return;
         }
 
-        System.out.println("\n======================================");
-        System.out.println("       LOKANDA SYSTEM FINISHED");
-        System.out.println("======================================");
+        int choice;
+
+        do {
+
+            LoginService.clearScreen();
+
+            System.out.println("=================================");
+            System.out.println("          LOKANDA HOTEL          ");
+            System.out.println("             MAIN MENU           ");
+            System.out.println("=================================");
+
+            System.out.println("1. Create New Booking");
+            System.out.println("2. View All Bookings");
+            System.out.println("3. Search Booking");
+            System.out.println("4. Modify Booking");
+            System.out.println("5. Cancel Booking");
+            System.out.println("6. Manage Rooms");
+            System.out.println("7. Manage Offers");
+            System.out.println("8. Exit");
+
+            System.out.println("=================================");
+            System.out.print("Enter your choice: ");
+
+            try {
+                choice = Integer.parseInt(scanner.nextLine());
+
+            } catch (NumberFormatException e) {
+                choice = -1;
+            }
+
+            LoginService.clearScreen();
+
+            switch (choice) {
+
+                case 1:
+                    System.out.println("Create New Booking");
+                    break;
+
+                case 2:
+                    System.out.println("View All Bookings");
+                    break;
+
+                case 3:
+                    System.out.println("Search Booking");
+                    break;
+
+                case 4:
+                    System.out.println("Modify Booking");
+                    break;
+
+                case 5:
+                    System.out.println("Cancel Booking");
+                    break;
+
+                case 6:
+                    System.out.println("Manage Rooms");
+                    break;
+
+                case 7:
+                    System.out.println("Manage Offers");
+                    break;
+
+                case 8:
+                    System.out.println("Thank you for using LOKANDA!");
+                    break;
+
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+            }
+
+            if (choice != 8) {
+                System.out.println("\nPress Enter to continue...");
+                scanner.nextLine();
+            }
+
+        } while (choice != 8);
+
+        scanner.close();
     }
 }

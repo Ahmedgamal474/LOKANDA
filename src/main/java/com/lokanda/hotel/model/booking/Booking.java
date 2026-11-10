@@ -44,7 +44,7 @@ public class Booking {
         if (guest == null || receptionist == null) {
             throw new IllegalArgumentException("Guest and Receptionist cannot be null");
         }
-        DatesValidator.validateDates(checkIn, checkOut);
+        model.DatesValidator.validateDates(checkIn, checkOut);
         this.guest = guest;
         this.checkIn = checkIn;
         this.checkOut = checkOut;
@@ -248,7 +248,7 @@ public class Booking {
             throw new IllegalStateException("Cannot modify this booking");
         }
 
-        DatesValidator.validateDates(checkIn, checkOut);
+        model.DatesValidator.validateDates(checkIn, checkOut);
 
         List<BookingItem> updatedItems = new ArrayList<>();
         BigDecimal newTotal = BigDecimal.ZERO;
