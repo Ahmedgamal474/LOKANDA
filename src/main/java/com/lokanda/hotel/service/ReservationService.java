@@ -1,8 +1,14 @@
+
 package com.lokanda.hotel.service;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.lokanda.hotel.DAO.BookingDAO;
+import com.lokanda.hotel.DAO.BookingPackageDAO;
+import com.lokanda.hotel.DAO.RoomDAO;
 
 import com.lokanda.hotel.model.booking.Booking;
 import com.lokanda.hotel.model.booking.BookingItem;
@@ -16,24 +22,65 @@ public class ReservationService {
     private final List<Room> rooms;
     private final List<Booking> reservations;
 
+    private final BookingDAO bookingDAO;
+    private final RoomDAO roomDAO;
+    private final BookingPackageDAO bookingPackageDAO;
+
+    public ReservationService() {
+        this.bookingDAO = new BookingDAO();
+        this.roomDAO = new RoomDAO();
+        this.bookingPackageDAO = new BookingPackageDAO();
+
+        try {
+            this.rooms = new ArrayList<>(roomDAO.getAllRooms());
+            this.reservations = new ArrayList<>(bookingDAO.getAllBookings());
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load hotel data", e);
+        }
+
+        validateRoomIds();
+    }
+
     public ReservationService(List<Room> rooms) {
         if (rooms == null || rooms.contains(null)) {
             throw new IllegalArgumentException("Invalid rooms list");
         }
 
-        this.rooms = new ArrayList<>(rooms);
-        this.reservations = new ArrayList<>();
+        this.bookingDAO = new BookingDAO();
+        this.roomDAO = new RoomDAO();
+        this.bookingPackageDAO = new BookingPackageDAO();
 
+        this.rooms = new ArrayList<>(rooms);
+
+        try {
+            this.reservations = new ArrayList<>(bookingDAO.getAllBookings());
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load reservations", e);
+        }
+
+        validateRoomIds();
+    }
+
+    private void validateRoomIds() {
         for (int i = 0; i < this.rooms.size(); i++) {
             for (int j = i + 1; j < this.rooms.size(); j++) {
-                if (this.rooms.get(i).getRoomId() == this.rooms.get(j).getRoomId()) {
+                if (this.rooms.get(i).getRoomId()
+                        == this.rooms.get(j).getRoomId()) {
                     throw new IllegalArgumentException("Room IDs must be unique");
                 }
             }
         }
     }
 
-    // Find rooms that are available for the requested dates and room type.
+    private void refreshReservations() {
+        try {
+            reservations.clear();
+            reservations.addAll(bookingDAO.getAllBookings());
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to refresh reservations", e);
+        }
+    }
+
     public List<Room> getAvailableRooms(LocalDate checkIn,
                                         LocalDate checkOut,
                                         RoomType roomType) {
@@ -43,6 +90,8 @@ public class ReservationService {
         if (roomType == null) {
             throw new IllegalArgumentException("Room type cannot be null");
         }
+
+        refreshReservations();
 
         List<Room> availableRooms = new ArrayList<>();
 
@@ -56,7 +105,6 @@ public class ReservationService {
         return availableRooms;
     }
 
-    // Add a valid booking to the reservation list.
     public Booking createReservation(Booking booking) {
 
         if (booking == null) {
@@ -64,6 +112,7 @@ public class ReservationService {
         }
 
         validateDates(booking.getCheckIn(), booking.getCheckOut());
+        refreshReservations();
 
         if (booking.getItems().isEmpty()) {
             throw new IllegalArgumentException(
@@ -75,73 +124,99 @@ public class ReservationService {
             throw new IllegalArgumentException("Invalid booking status");
         }
 
-        for (Booking existingBooking : reservations) {
-            if (existingBooking.getBookingId() == booking.getBookingId()) {
-                throw new IllegalArgumentException("Booking ID already exists");
+        if (booking.getBookingId() > 0) {
+            for (Booking existingBooking : reservations) {
+                if (existingBooking.getBookingId() == booking.getBookingId()) {
+                    throw new IllegalArgumentException("Booking ID already exists");
+                }
             }
         }
 
-        // A room can appear only once in the same booking.
         List<Integer> selectedRoomIds = new ArrayList<>();
 
-        for (BookingItem item : booking.getItems()) {
-            Room selectedRoom = findHotelRoom(item.getRoom());
+        try {
+            for (BookingItem item : booking.getItems()) {
 
-            if (selectedRoom == null) {
-                throw new IllegalArgumentException(
-                        "Room does not belong to this hotel");
+                if (item == null || item.getBookingPackage() == null) {
+                    throw new IllegalArgumentException(
+                            "Booking item and package cannot be null");
+                }
+
+                bookingPackageDAO.getPackageIdByName(
+                        item.getBookingPackage().getName());
+
+                Room selectedRoom = findHotelRoom(item.getRoom());
+
+                if (selectedRoom == null) {
+                    throw new IllegalArgumentException(
+                            "Room does not belong to this hotel");
+                }
+
+                if (selectedRoomIds.contains(selectedRoom.getRoomId())) {
+                    throw new IllegalArgumentException(
+                            "The same room cannot be added more than once");
+                }
+
+                selectedRoomIds.add(selectedRoom.getRoomId());
+
+                if (!isRoomAvailable(selectedRoom,
+                        booking.getCheckIn(), booking.getCheckOut(), -1)) {
+                    throw new IllegalStateException("Room is not available");
+                }
             }
 
-            if (selectedRoomIds.contains(selectedRoom.getRoomId())) {
-                throw new IllegalArgumentException(
-                        "The same room cannot be added more than once");
+            Offer offer = booking.getOffer();
+
+            if (offer != null) {
+                if (!offer.isValid(booking.getCheckIn())) {
+                    throw new IllegalArgumentException(
+                            "Offer is not valid for the booking check-in date");
+                }
+
+                booking.setDiscountAmount(
+                        offer.calculateDiscount(booking.calculateTotal()));
+            } else {
+                booking.calculateFinalPrice();
             }
 
-            selectedRoomIds.add(selectedRoom.getRoomId());
+            bookingDAO.addBooking(booking);
+            refreshReservations();
 
-            if (!isRoomAvailable(selectedRoom, booking.getCheckIn(),
-                    booking.getCheckOut(), -1)) {
-                throw new IllegalStateException("Room is not available");
-            }
+            return booking;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to create reservation", e);
         }
-
-        // Apply the offer, if one was selected.
-        Offer offer = booking.getOffer();
-
-        if (offer != null) {
-            if (!offer.isValid(booking.getCheckIn())) {
-                throw new IllegalArgumentException(
-                        "Offer is not valid for the booking check-in date");
-            }
-
-            booking.setDiscountAmount(
-                    offer.calculateDiscount(booking.calculateTotal()));
-        } else {
-            // Check that any manually entered discount is valid.
-            booking.calculateFinalPrice();
-        }
-
-        reservations.add(booking);
-        return booking;
     }
 
-    // Find a reservation using its ID.
     public Booking findReservation(int bookingId) {
 
         if (bookingId < 0) {
             throw new IllegalArgumentException("Invalid booking ID");
         }
 
-        for (Booking booking : reservations) {
-            if (booking.getBookingId() == bookingId) {
-                return booking;
-            }
-        }
+        try {
+            Booking booking = bookingDAO.getBookingById(bookingId);
 
-        throw new IllegalArgumentException("Reservation not found");
+            if (booking == null) {
+                throw new IllegalArgumentException("Reservation not found");
+            }
+
+            for (int i = 0; i < reservations.size(); i++) {
+                if (reservations.get(i).getBookingId() == bookingId) {
+                    reservations.set(i, booking);
+                    return booking;
+                }
+            }
+
+            reservations.add(booking);
+            return booking;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find reservation", e);
+        }
     }
 
-    // Change the dates of an existing reservation.
     public void modifyReservation(int bookingId,
                                   LocalDate newCheckIn,
                                   LocalDate newCheckOut) {
@@ -166,11 +241,29 @@ public class ReservationService {
         }
 
         booking.modify(newCheckIn, newCheckOut);
+
+        try {
+            bookingDAO.updateBooking(booking);
+            refreshReservations();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to modify reservation", e);
+        }
     }
 
     public void cancelReservation(int bookingId) {
+
         Booking booking = findReservation(bookingId);
         booking.cancel();
+
+        try {
+            bookingDAO.updateBookingStatus(
+                    bookingId, booking.getStatus().name());
+
+            refreshReservations();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to cancel reservation", e);
+        }
     }
 
     private Room findHotelRoom(Room room) {
@@ -203,7 +296,7 @@ public class ReservationService {
 
             boolean datesOverlap =
                     checkIn.isBefore(booking.getCheckOut())
-                    && checkOut.isAfter(booking.getCheckIn());
+                            && checkOut.isAfter(booking.getCheckIn());
 
             if (datesOverlap) {
                 for (BookingItem item : booking.getItems()) {
