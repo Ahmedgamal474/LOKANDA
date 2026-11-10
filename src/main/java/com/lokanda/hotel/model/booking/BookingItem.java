@@ -1,9 +1,11 @@
 
 package com.lokanda.hotel.model.booking;
 
-import java.math.BigDecimal;
 import com.lokanda.hotel.model.room.Room;
 import com.lokanda.hotel.model.bookingpackage.BookingPackage;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class BookingItem {
 
@@ -12,13 +14,11 @@ public class BookingItem {
     private BookingPackage bookingPackage;
     private BigDecimal priceSnapshot;
 
-    public BookingItem(int itemId, Room room, BookingPackage bookingPackage,
-                       BigDecimal priceSnapshot) {
-
-        setItemId(itemId);
+    public BookingItem(Room room, BookingPackage bookingPackage, LocalDate checkIn,LocalDate checkOut) {
+        DatesValidator.validateDates(checkIn,checkOut);
         setRoom(room);
         setBookingPackage(bookingPackage);
-        setPriceSnapshot(priceSnapshot);
+        setPriceSnapshot(this.bookingPackage.calculatePackagePrice(this.room.getType(),checkIn,checkOut));
     }
 
     public int getItemId() {
@@ -36,7 +36,7 @@ public class BookingItem {
         return room;
     }
 
-    public void setRoom(Room room) {
+    private void setRoom(Room room) {
         if (room == null) {
             throw new IllegalArgumentException("Room cannot be null");
         }
@@ -47,7 +47,7 @@ public class BookingItem {
         return bookingPackage;
     }
 
-    public void setBookingPackage(BookingPackage bookingPackage) {
+    private void setBookingPackage(BookingPackage bookingPackage) {
         if (bookingPackage == null) {
             throw new IllegalArgumentException("Booking package cannot be null");
         }
@@ -58,11 +58,14 @@ public class BookingItem {
         return priceSnapshot;
     }
 
-    public void setPriceSnapshot(BigDecimal priceSnapshot) {
+    private void setPriceSnapshot(BigDecimal priceSnapshot) {
         if (priceSnapshot == null ||
                 priceSnapshot.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Price must be greater than zero");
         }
+        this.priceSnapshot = priceSnapshot;
+    }
+}
         this.priceSnapshot = priceSnapshot;
     }
 }
