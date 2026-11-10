@@ -1,6 +1,5 @@
-package DAO;
-
-import model.Receptionist;
+package com.lokanda.hotel.DAO;
+import com.lokanda.hotel.model.person.Receptionist;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
