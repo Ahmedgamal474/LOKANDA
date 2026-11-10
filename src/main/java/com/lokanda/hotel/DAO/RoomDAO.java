@@ -1,6 +1,6 @@
-package DAO;
-import model.Room;
-import model.RoomType;
+package com.lokanda.hotel.DAO;
+import com.lokanda.hotel.model.room.Room;
+import com.lokanda.hotel.model.room.RoomType;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
