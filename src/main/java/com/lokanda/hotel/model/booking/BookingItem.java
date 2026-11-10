@@ -66,7 +66,6 @@ public class BookingItem {
         this.priceSnapshot = priceSnapshot;
     }
 }
-        this.priceSnapshot = priceSnapshot;
-    }
-}
+
+
 

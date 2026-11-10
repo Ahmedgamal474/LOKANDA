@@ -1,4 +1,4 @@
-package model;
+package com.lokanda.hotel.model.booking  ;
 
 import java.time.LocalDate;
 
