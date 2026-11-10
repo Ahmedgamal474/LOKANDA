@@ -278,6 +278,68 @@ public class Booking {
         this.discountAmount = newDiscount;
     }
 
+// public void modifyDetails(
+//         Guest newGuest,
+//         Receptionist newReceptionist,
+//         LocalDate newCheckIn,
+//         LocalDate newCheckOut,
+//         List<BookingItem> newItems,
+//         Offer newOffer,
+//         BigDecimal newDiscount) {
+
+//     if (status == BookingStatus.CANCELLED
+//             || status == BookingStatus.COMPLETED) {
+//         throw new IllegalStateException(
+//                 "Cannot modify this booking");
+//     }
+
+//     if (newGuest == null || newReceptionist == null) {
+//         throw new IllegalArgumentException(
+//                 "Guest and Receptionist cannot be null");
+//     }
+
+//     DatesValidator.validateDates(newCheckIn, newCheckOut);
+
+//     if (newItems == null || newItems.isEmpty()
+//             || newItems.contains(null)) {
+//         throw new IllegalArgumentException(
+//                 "Booking must contain valid items");
+//     }
+
+//     if (newDiscount == null
+//             || newDiscount.compareTo(BigDecimal.ZERO) < 0) {
+//         throw new IllegalArgumentException(
+//                 "Invalid discount amount");
+//     }
+
+//     BigDecimal newTotal = BigDecimal.ZERO;
+
+//     for (BookingItem item : newItems) {
+//         newTotal = newTotal.add(item.getPriceSnapshot());
+//     }
+
+//     if (newDiscount.compareTo(newTotal) > 0) {
+//         throw new IllegalArgumentException(
+//                 "Discount cannot exceed total price");
+//     }
+
+//     BigDecimal newFinalPrice = newTotal.subtract(newDiscount);
+
+//     if (newFinalPrice.compareTo(getTotalPaid()) < 0) {
+//         throw new IllegalArgumentException(
+//                 "New price cannot be less than the amount already paid");
+//     }
+
+//     // Apply changes after validation.
+//     this.guest = newGuest;
+//     this.receptionist = newReceptionist;
+//     this.checkIn = newCheckIn;
+//     this.checkOut = newCheckOut;
+//     this.items = new ArrayList<>(newItems);
+//     this.offer = newOffer;
+//     this.discountAmount = newDiscount;
+// }
+
     //Confirm Booking
     public void confirm() {
         if (status != BookingStatus.PENDING) {
