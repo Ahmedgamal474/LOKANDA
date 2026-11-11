@@ -1,25 +1,33 @@
+
 package com.lokanda.hotel.DAO;
+
 import java.sql.*;
-import com.lokanda.hotel.model.booking.Booking;
-import com.lokanda.hotel.model.booking.BookingItem;
-import com.lokanda.hotel.model.booking.BookingStatus;
-import com.lokanda.hotel.model.bookingpackage.AllInclusive;
-import com.lokanda.hotel.model.bookingpackage.BookingPackage;
-import com.lokanda.hotel.model.bookingpackage.BreakfastOnly;
-import com.lokanda.hotel.model.bookingpackage.HalfBoard;
-import com.lokanda.hotel.model.offer.Offer;
-import com.lokanda.hotel.model.person.Guest;
-import com.lokanda.hotel.model.person.Receptionist;
-import com.lokanda.hotel.model.room.Room;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lokanda.hotel.model.booking.Booking;
+import com.lokanda.hotel.model.booking.BookingItem;
+import com.lokanda.hotel.model.booking.BookingStatus;
+
+import com.lokanda.hotel.model.bookingpackage.AllInclusive;
+import com.lokanda.hotel.model.bookingpackage.BookingPackage;
+import com.lokanda.hotel.model.bookingpackage.BreakfastOnly;
+import com.lokanda.hotel.model.bookingpackage.HalfBoard;
+
+import com.lokanda.hotel.model.offer.Offer;
+import com.lokanda.hotel.model.person.Guest;
+import com.lokanda.hotel.model.person.Receptionist;
+import com.lokanda.hotel.model.room.Room;
+
 public class BookingDAO {
 
-    // =====================================
+    private final GuestDAO guestDAO = new GuestDAO();
+    private final ReceptionistDAO receptionistDAO = new ReceptionistDAO();
+    private final OfferDAO offerDAO = new OfferDAO();
+    private final RoomDAO roomDAO = new RoomDAO();
+
     // ADD BOOKING
-    // =====================================
 
     public boolean addBooking(Booking booking) throws SQLException {
 
@@ -53,15 +61,12 @@ public class BookingDAO {
 
             try {
 
-                // Insert booking
-
                 int bookingId;
 
                 try (PreparedStatement statement =
                              connection.prepareStatement(
                                      bookingSQL,
-                                     Statement.RETURN_GENERATED_KEYS
-                             )) {
+                                     Statement.RETURN_GENERATED_KEYS)) {
 
                     statement.setInt(1, booking.getGuest().getPersonId());
 
@@ -70,7 +75,7 @@ public class BookingDAO {
                     if (booking.getOffer() != null) {
                         statement.setInt(3, booking.getOffer().getOfferId());
                     } else {
-                        statement.setNull(3, java.sql.Types.INTEGER);
+                        statement.setNull(3, Types.INTEGER);
                     }
 
                     statement.setDate(4, Date.valueOf(booking.getCheckIn()));
@@ -98,7 +103,6 @@ public class BookingDAO {
                         }
                     }
                 }
-
 
                 // Insert booking items
 
@@ -132,7 +136,6 @@ public class BookingDAO {
                     itemStatement.executeBatch();
                 }
 
-
                 connection.commit();
 
                 return true;
@@ -150,10 +153,7 @@ public class BookingDAO {
         }
     }
 
-
-    // =====================================
     // GET PACKAGE ID BY NAME
-    // =====================================
 
     private int getPackageId(
             Connection connection,
@@ -163,12 +163,12 @@ public class BookingDAO {
         String sql = """
                 SELECT package_id
                 FROM booking_package
-                WHERE package_name = ?
+                WHERE name = ?
                 """;
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            statement.setString(1, packageName);
+            statement.setString(1, toDatabasePackageName(packageName));
 
             try (ResultSet result = statement.executeQuery()) {
 
@@ -181,20 +181,19 @@ public class BookingDAO {
         throw new SQLException("Package not found: " + packageName);
     }
 
-    // =====================================
     // UPDATE BOOKING
-    // =====================================
+
     public boolean updateBooking(Booking booking) throws SQLException {
 
         String sql = """
-            UPDATE booking
-            SET offer_id = ?,
-                check_in = ?,
-                check_out = ?,
-                discount_amount = ?,
-                status = ?
-            WHERE booking_id = ?
-            """;
+                UPDATE booking
+                SET offer_id = ?,
+                    check_in = ?,
+                    check_out = ?,
+                    discount_amount = ?,
+                    status = ?
+                WHERE booking_id = ?
+                """;
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -202,7 +201,7 @@ public class BookingDAO {
             if (booking.getOffer() != null) {
                 statement.setInt(1, booking.getOffer().getOfferId());
             } else {
-                statement.setNull(1, java.sql.Types.INTEGER);
+                statement.setNull(1, Types.INTEGER);
             }
 
             statement.setDate(2, Date.valueOf(booking.getCheckIn()));
@@ -218,15 +217,14 @@ public class BookingDAO {
         }
     }
 
-    // =====================================
     // DELETE BOOKING
-    // =====================================
+
     public boolean deleteBooking(int bookingId) throws SQLException {
 
         String sql = """
-            DELETE FROM booking
-            WHERE booking_id = ?
-            """;
+                DELETE FROM booking
+                WHERE booking_id = ?
+                """;
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -237,19 +235,18 @@ public class BookingDAO {
         }
     }
 
-    // =====================================
-    // Update Booking Status
-    // =====================================
+    // UPDATE BOOKING STATUS
+
     public boolean updateBookingStatus(
             int bookingId,
             String status
     ) throws SQLException {
 
         String sql = """
-            UPDATE booking
-            SET status = ?
-            WHERE booking_id = ?
-            """;
+                UPDATE booking
+                SET status = ?
+                WHERE booking_id = ?
+                """;
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -260,21 +257,16 @@ public class BookingDAO {
             return statement.executeUpdate() > 0;
         }
     }
-    private final GuestDAO guestDAO = new GuestDAO();
-    private final ReceptionistDAO receptionistDAO = new ReceptionistDAO();
-    private final OfferDAO offerDAO = new OfferDAO();
-    private final RoomDAO roomDAO = new RoomDAO();
-    // =====================================
-// GET BOOKING BY ID
-// =====================================
+
+    // GET BOOKING BY ID
 
     public Booking getBookingById(int bookingId) throws SQLException {
 
         String sql = """
-            SELECT *
-            FROM booking
-            WHERE booking_id = ?
-            """;
+                SELECT *
+                FROM booking
+                WHERE booking_id = ?
+                """;
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -287,8 +279,8 @@ public class BookingDAO {
 
                     Booking booking = mapBooking(result);
 
-//                    booking.getItems().addAll(getBookingItems(bookingId));
                     booking.setItems(getBookingItems(bookingId));
+
                     return booking;
                 }
             }
@@ -296,9 +288,8 @@ public class BookingDAO {
 
         return null;
     }
-    // =====================================
-// GET ALL BOOKINGS
-// =====================================
+
+    // GET ALL BOOKINGS
 
     public List<Booking> getAllBookings() throws SQLException {
 
@@ -324,9 +315,8 @@ public class BookingDAO {
 
         return bookings;
     }
-    // =====================================
-// GET BOOKING ITEMS
-// =====================================
+
+    // GET BOOKING ITEMS
 
     private List<BookingItem> getBookingItems(int bookingId)
             throws SQLException {
@@ -334,12 +324,12 @@ public class BookingDAO {
         List<BookingItem> items = new ArrayList<>();
 
         String sql = """
-            SELECT bi.*, bp.package_name
-            FROM booking_item bi
-            JOIN booking_package bp
-            ON bi.package_id = bp.package_id
-            WHERE bi.booking_id = ?
-            """;
+                SELECT bi.*, bp.name
+                FROM booking_item bi
+                JOIN booking_package bp
+                ON bi.package_id = bp.package_id
+                WHERE bi.booking_id = ?
+                """;
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -354,7 +344,7 @@ public class BookingDAO {
 
                     int roomId = result.getInt("room_id");
 
-                    String packageName = result.getString("package_name");
+                    String packageName = result.getString("name");
 
                     BigDecimal priceSnapshot =
                             result.getBigDecimal("price_snapshot");
@@ -378,22 +368,25 @@ public class BookingDAO {
 
         return items;
     }
-    // =====================================
-// CREATE BOOKING PACKAGE
-// =====================================
+
+    // CREATE BOOKING PACKAGE
 
     private BookingPackage createBookingPackage(String packageName)
             throws SQLException {
 
-        switch (packageName) {
+        if (packageName == null) {
+            throw new SQLException("Package name cannot be null");
+        }
 
-            case "Breakfast Only":
+        switch (toDatabasePackageName(packageName)) {
+
+            case "BREAKFAST_ONLY":
                 return new BreakfastOnly();
 
-            case "Half Board":
+            case "HALF_BOARD":
                 return new HalfBoard();
 
-            case "All Inclusive":
+            case "ALL_INCLUSIVE":
                 return new AllInclusive();
 
             default:
@@ -402,9 +395,35 @@ public class BookingDAO {
                 );
         }
     }
-    // =====================================
-// MAP RESULTSET TO BOOKING
-// =====================================
+
+    // CONVERT PACKAGE NAME
+
+    private String toDatabasePackageName(String packageName)
+            throws SQLException {
+
+        if (packageName == null) {
+            throw new SQLException("Package name cannot be null");
+        }
+
+        switch (packageName.trim().toUpperCase().replace(' ', '_')) {
+
+            case "BREAKFAST_ONLY":
+                return "BREAKFAST_ONLY";
+
+            case "HALF_BOARD":
+                return "HALF_BOARD";
+
+            case "ALL_INCLUSIVE":
+                return "ALL_INCLUSIVE";
+
+            default:
+                throw new SQLException(
+                        "Unknown package: " + packageName
+                );
+        }
+    }
+
+    // MAP RESULTSET TO BOOKING
 
     private Booking mapBooking(ResultSet result) throws SQLException {
 
