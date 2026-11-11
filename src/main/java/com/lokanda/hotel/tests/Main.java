@@ -1,4 +1,4 @@
-package com.lokanda.hotel;
+package com.lokanda.hotel.tests;
 
 import com.lokanda.hotel.auth.LoginService;
 
